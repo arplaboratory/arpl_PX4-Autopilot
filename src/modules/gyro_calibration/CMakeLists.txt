@@ -41,5 +41,5 @@ px4_add_module(
 		GyroCalibration.hpp
 	DEPENDS
 		px4_work_queue
-		sensor_calibration
+		sensor_configuration
 	)

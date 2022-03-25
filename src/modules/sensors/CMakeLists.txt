@@ -77,7 +77,7 @@ px4_add_module(
 		conversion
 		data_validator
 		mathlib
-		sensor_calibration
+		sensor_configuration
 		vehicle_imu
 	)
 
