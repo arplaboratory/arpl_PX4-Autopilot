@@ -91,11 +91,31 @@ void VehicleGPSPosition::ParametersUpdate(bool force)
 			}
 		}
 
+		for (int instance = 0; instance < GPS_MAX_RECEIVERS; instance++) {
+			_configuration[instance].ParametersUpdate();
+
+			_gps_blending.setAntennaOffset(_configuration[instance].position(), instance);
+		}
+
 		_gps_blending.setBlendingUseSpeedAccuracy(_param_sens_gps_mask.get() & BLEND_MASK_USE_SPD_ACC);
 		_gps_blending.setBlendingUseHPosAccuracy(_param_sens_gps_mask.get() & BLEND_MASK_USE_HPOS_ACC);
 		_gps_blending.setBlendingUseVPosAccuracy(_param_sens_gps_mask.get() & BLEND_MASK_USE_VPOS_ACC);
 		_gps_blending.setBlendingTimeConstant(_param_sens_gps_tau.get());
-		_gps_blending.setPrimaryInstance(_param_sens_gps_prime.get());
+
+		// TODO: select highest priority
+		int primary_instance = -1;
+		uint8_t highest_priority = 0;
+
+		for (int instance = 0; instance < GPS_MAX_RECEIVERS; instance++) {
+			if (_configuration[instance].enabled() && _configuration[instance].priority() > highest_priority) {
+				primary_instance = instance;
+				highest_priority = _configuration[instance].priority();
+			}
+		}
+
+		if (primary_instance >= 0) {
+			//_gps_blending.setPrimaryInstance(primary_instance);
+		}
 	}
 }
 
@@ -103,6 +123,18 @@ void VehicleGPSPosition::Run()
 {
 	perf_begin(_cycle_perf);
 	ParametersUpdate();
+
+	// update attitude
+
+	if (_vehicle_attitude_sub.updated()) {
+		// Transform offset from NED to body frame
+		vehicle_attitude_s attitude{};
+
+		if (_vehicle_attitude_sub.update(&attitude)) {
+			// Quaternion rotation from the FRD body frame to the NED earth frame
+			_gps_blending.setAttitude(matrix::Quatf{attitude.q});
+		}
+	}
 
 	// Check all GPS instance
 	bool any_gps_updated = false;
@@ -148,6 +180,12 @@ void VehicleGPSPosition::Run()
 void VehicleGPSPosition::PrintStatus()
 {
 	PX4_INFO_RAW("[vehicle_gps_position] selected GPS: %d\n", _gps_blending.getSelectedGps());
+
+	for (int i = 0; i < GPS_MAX_RECEIVERS; i++) {
+		if (_configuration[i].device_id() != 0) {
+			_configuration[i].PrintStatus();
+		}
+	}
 }
 
 }; // namespace sensors

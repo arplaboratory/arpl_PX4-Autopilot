@@ -418,7 +418,7 @@ int Sensors::parameters_update()
 	for (uint8_t i = 0; i < MAX_SENSOR_COUNT; i++) {
 		// sensor_accel
 		{
-			const uint32_t device_id_accel = sensor_configuration::GetCalibrationParamInt32("ACC", "ID", i);
+			const uint32_t device_id_accel = sensor_configuration::GetConfigurationParamInt32("CAL", "ACC", "ID", i);
 
 			if (device_id_accel != 0) {
 				sensor_configuration::Accelerometer accel_cal(device_id_accel);
@@ -436,7 +436,7 @@ int Sensors::parameters_update()
 
 		// sensor_gyro
 		{
-			const uint32_t device_id_gyro = sensor_configuration::GetCalibrationParamInt32("GYRO", "ID", i);
+			const uint32_t device_id_gyro = sensor_configuration::GetConfigurationParamInt32("CAL", "GYRO", "ID", i);
 
 			if (device_id_gyro != 0) {
 				sensor_configuration::Gyroscope gyro_cal(device_id_gyro);
@@ -455,7 +455,7 @@ int Sensors::parameters_update()
 #if defined(CONFIG_SENSORS_VEHICLE_MAGNETOMETER)
 		// sensor_mag
 		{
-			uint32_t device_id_mag = sensor_configuration::GetCalibrationParamInt32("MAG", "ID", i);
+			uint32_t device_id_mag = sensor_configuration::GetConfigurationParamInt32("CAL", "MAG", "ID", i);
 
 			if (device_id_mag != 0) {
 				sensor_configuration::Magnetometer mag_cal(device_id_mag);
