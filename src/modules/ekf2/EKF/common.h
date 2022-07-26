@@ -71,9 +71,15 @@ using matrix::wrap_pi;
 // ground effect compensation
 #define GNDEFFECT_TIMEOUT       10E6    ///< Maximum period of time that ground effect protection will be active after it was last turned on (uSec)
 
+enum class PositionFrame : uint8_t {
+	LOCAL_FRAME_NED = 0,
+	LOCAL_FRAME_FRD = 1,
+};
+
 enum class VelocityFrame : uint8_t {
-	LOCAL_FRAME_FRD = 0,
-	BODY_FRAME_FRD  = 1
+	LOCAL_FRAME_NED = 0,
+	LOCAL_FRAME_FRD = 1,
+	BODY_FRAME_FRD  = 2
 };
 
 enum GeoDeclinationMask : uint8_t {
@@ -114,7 +120,7 @@ enum SensorFusionMask : uint16_t {
 	USE_EXT_VIS_POS  = (1<<3),      ///< set to true to use external vision position data
 	USE_EXT_VIS_YAW  = (1<<4),      ///< set to true to use external vision quaternion data for yaw
 	USE_DRAG         = (1<<5),      ///< set to true to use the multi-rotor drag model to estimate wind
-	ROTATE_EXT_VIS   = (1<<6),      ///< set to true to if the EV observations are in a non NED reference frame and need to be rotated before being used
+
 	USE_GPS_YAW      = (1<<7),      ///< set to true to use GPS yaw data if available
 	USE_EXT_VIS_VEL  = (1<<8)       ///< set to true to use external vision velocity data
 };
@@ -207,10 +213,12 @@ struct extVisionSample {
 	Vector3f    vel{};         ///< FRD velocity in reference frame defined in vel_frame variable (m/sec) - Z must be aligned with down axis
 	Quatf       quat{};        ///< quaternion defining rotation from body to earth frame
 	Vector3f    posVar{};      ///< XYZ position variances (m**2)
-	Matrix3f    velCov{};      ///< XYZ velocity covariances ((m/sec)**2)
+	Vector3f    velVar{};      ///< XYZ velocity variances ((m/sec)**2)
 	float       angVar{};      ///< angular heading variance (rad**2)
+	PositionFrame pos_frame = PositionFrame::LOCAL_FRAME_FRD;
 	VelocityFrame vel_frame = VelocityFrame::BODY_FRAME_FRD;
 	uint8_t     reset_counter{};
+	int8_t     quality{};     ///< quality indicator between 0 and 100
 };
 
 struct dragSample {
@@ -332,6 +340,7 @@ struct parameters {
 	float range_kin_consistency_gate{1.0f}; ///< gate size used by the range finder kinematic consistency check
 
 	// vision position fusion
+	int32_t ev_quality_minimum{0};          ///< vision minimum acceptable quality integer
 	float ev_vel_innov_gate{3.0f};          ///< vision velocity fusion innovation consistency gate size (STD)
 	float ev_pos_innov_gate{5.0f};          ///< vision position fusion innovation consistency gate size (STD)
 
@@ -479,7 +488,7 @@ union filter_control_status_u {
 		uint32_t gps                     : 1; ///< 2 - true if GPS measurement fusion is intended
 		uint32_t opt_flow                : 1; ///< 3 - true if optical flow measurements fusion is intended
 		uint32_t mag_hdg                 : 1; ///< 4 - true if a simple magnetic yaw heading fusion is intended
-		uint32_t mag_3D                  : 1; ///< 5 - true if 3-axis magnetometer measurement fusion is inteded
+		uint32_t mag_3D                  : 1; ///< 5 - true if 3-axis magnetometer measurement fusion is intended
 		uint32_t mag_dec                 : 1; ///< 6 - true if synthetic magnetic declination measurements fusion is intended
 		uint32_t in_air                  : 1; ///< 7 - true when the vehicle is airborne
 		uint32_t wind                    : 1; ///< 8 - true when wind velocity is being estimated
@@ -540,7 +549,7 @@ union terrain_fusion_status_u {
 // define structure used to communicate information events
 union information_event_status_u {
 	struct {
-		bool gps_checks_passed          : 1; ///< 0 - true when gps quality checks are passing passed
+		bool gps_checks_passed          : 1; ///< 0 - true when gps quality checks are passing
 		bool reset_vel_to_gps           : 1; ///< 1 - true when the velocity states are reset to the gps measurement
 		bool reset_vel_to_flow          : 1; ///< 2 - true when the velocity states are reset using the optical flow measurement
 		bool reset_vel_to_vision        : 1; ///< 3 - true when the velocity states are reset to the vision system measurement

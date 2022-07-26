@@ -171,7 +171,7 @@ bool Ekf::fuseMag(const Vector3f &mag, estimator_aid_source_3d_s &aid_src_mag, b
 		aid_src_mag.observation[i] = mag_observation(i);
 		aid_src_mag.observation_variance[i] = R_MAG;
 		aid_src_mag.innovation[i] = mag_innov(i);
-		aid_src_mag.fusion_enabled[i] = _control_status.flags.mag_3D;
+		aid_src_mag.fusion_enabled[i] = _control_status.flags.mag_3D && update_all_states;
 	}
 
 	// do not use the synthesized measurement for the magnetomter Z component for 3D fusion
@@ -180,37 +180,16 @@ bool Ekf::fuseMag(const Vector3f &mag, estimator_aid_source_3d_s &aid_src_mag, b
 		aid_src_mag.innovation_rejected[2] = false;
 	}
 
-	float innov_gate = math::max(_params.mag_innov_gate, 1.f);
+	const float innov_gate = math::max(_params.mag_innov_gate, 1.f);
 	setEstimatorAidStatusTestRatio(aid_src_mag, innov_gate);
 
 	// Perform an innovation consistency check and report the result
-	bool all_innovation_checks_passed = true;
-
-	for (uint8_t index = 0; index <= 2; index++) {
-
-		bool rejected = (aid_src_mag.innovation_rejected[index] > 1.f);
-
-		switch (index) {
-		case 0:
-			_innov_check_fail_status.flags.reject_mag_x = rejected;
-			break;
-
-		case 1:
-			_innov_check_fail_status.flags.reject_mag_y = rejected;
-			break;
-
-		case 2:
-			_innov_check_fail_status.flags.reject_mag_z = rejected;
-			break;
-		}
-
-		if (rejected) {
-			all_innovation_checks_passed = false;
-		}
-	}
+	_innov_check_fail_status.flags.reject_mag_x = aid_src_mag.innovation_rejected[0];
+	_innov_check_fail_status.flags.reject_mag_y = aid_src_mag.innovation_rejected[1];
+	_innov_check_fail_status.flags.reject_mag_z = aid_src_mag.innovation_rejected[2];
 
 	// if any axis fails, abort the mag fusion
-	if (!all_innovation_checks_passed) {
+	if (aid_src_mag.innovation_rejected[0] || aid_src_mag.innovation_rejected[1] || aid_src_mag.innovation_rejected[2]) {
 		return false;
 	}
 
@@ -418,7 +397,7 @@ bool Ekf::fuseMag(const Vector3f &mag, estimator_aid_source_3d_s &aid_src_mag, b
 			Kfusion(21) = HKZ23*HKZ24;
 		}
 
-		const bool is_fused = measurementUpdate(Kfusion, Hfusion, mag_innov(index));
+		const bool is_fused = measurementUpdate(Kfusion, Hfusion, aid_src_mag.innovation[index]);
 
 		if (is_fused) {
 			aid_src_mag.fused[index] = true;
@@ -448,7 +427,7 @@ bool Ekf::fuseMag(const Vector3f &mag, estimator_aid_source_3d_s &aid_src_mag, b
 		}
 	}
 
-	return !_fault_status.flags.bad_mag_x && !_fault_status.flags.bad_mag_y && !_fault_status.flags.bad_mag_z;
+	return aid_src_mag.fused[0] && aid_src_mag.fused[1] && aid_src_mag.fused[2];
 }
 
 // update quaternion states and covariances using the yaw innovation and yaw observation variance

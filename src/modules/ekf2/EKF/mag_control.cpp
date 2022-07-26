@@ -106,6 +106,11 @@ void Ekf::controlMagFusion()
 		return;
 	}
 
+	if (!_control_status.flags.yaw_align && _control_status.flags.ev_yaw) {
+		// don't start if EV yaw is active (and not aligned north)
+		return;
+	}
+
 	_mag_yaw_reset_req |= !_control_status.flags.yaw_align;
 	_mag_yaw_reset_req |= _mag_inhibit_yaw_reset_req;
 
@@ -122,9 +127,18 @@ void Ekf::controlMagFusion()
 			selectMagAuto();
 			break;
 
-		case MagFuseType::INDOOR:
+		case MagFuseType::INDOOR: {
+				const bool gps_checks_passing = isTimedOut(_last_gps_fail_us, (uint64_t)5e6);
+				const bool gps_checks_failing = isTimedOut(_last_gps_pass_us, (uint64_t)5e6);
 
-		/* fallthrough */
+				if (gps_checks_passing && !gps_checks_failing) {
+					selectMagAuto();
+				} else if (!gps_checks_passing && gps_checks_failing && !_control_status.flags.gps) {
+					stopMagFusion();
+				}
+			}
+			break;
+
 		case MagFuseType::HEADING:
 			startMagHdgFusion();
 			break;
@@ -316,11 +330,19 @@ bool Ekf::shouldInhibitMag() const
 	// has explicitly stopped magnetometer use.
 	const bool user_selected = (_params.mag_fusion_type == MagFuseType::INDOOR);
 
-	const bool heading_not_required_for_navigation = !_control_status.flags.gps
-			&& !_control_status.flags.ev_pos
-			&& !_control_status.flags.ev_vel;
+	bool heading_required_for_navigation = false;
 
-	return (user_selected && heading_not_required_for_navigation) || _control_status.flags.mag_field_disturbed;
+	if (_control_status.flags.ev_yaw && _control_status.flags.yaw_align) {
+		if (_control_status.flags.ev_vel || _control_status.flags.ev_pos) {
+			heading_required_for_navigation = true;
+		}
+	}
+
+	if (_control_status.flags.gps) {
+		heading_required_for_navigation = true;
+	}
+
+	return (user_selected && !heading_required_for_navigation) || _control_status.flags.mag_field_disturbed;
 }
 
 bool Ekf::magFieldStrengthDisturbed(const Vector3f &mag_sample) const
@@ -374,10 +396,6 @@ void Ekf::runMagAndMagDeclFusions(const Vector3f &mag)
 
 void Ekf::run3DMagAndDeclFusions(const Vector3f &mag)
 {
-	_aid_src_mag.fusion_enabled[0] = true;
-	_aid_src_mag.fusion_enabled[1] = true;
-	_aid_src_mag.fusion_enabled[2] = true;
-
 	// For the first few seconds after in-flight alignment we allow the magnetic field state estimates to stabilise
 	// before they are used to constrain heading drift
 	const bool update_all_states = ((_imu_sample_delayed.time_us - _flt_mag_align_start_time) > (uint64_t)5e6)
