@@ -692,31 +692,31 @@ void Ekf::checkHeightSensorRefFallback()
 		break;
 
 	case HeightSensorRef::BARO:
-		fallback_list[0] = HeightSensorRef::GPS;
-		fallback_list[1] = HeightSensorRef::EV;
-		fallback_list[2] = HeightSensorRef::RANGE;
-		fallback_list[3] = HeightSensorRef::UNKNOWN;
+		fallback_list[0] = HeightSensorRef::BARO;
+		fallback_list[1] = HeightSensorRef::GPS;
+		fallback_list[2] = HeightSensorRef::EV;
+		fallback_list[3] = HeightSensorRef::RANGE;
 		break;
 
 	case HeightSensorRef::GPS:
-		fallback_list[0] = HeightSensorRef::BARO;
-		fallback_list[1] = HeightSensorRef::EV;
-		fallback_list[2] = HeightSensorRef::RANGE;
-		fallback_list[3] = HeightSensorRef::UNKNOWN;
+		fallback_list[0] = HeightSensorRef::GPS;
+		fallback_list[1] = HeightSensorRef::BARO;
+		fallback_list[2] = HeightSensorRef::EV;
+		fallback_list[3] = HeightSensorRef::RANGE;
 		break;
 
 	case HeightSensorRef::RANGE:
-		fallback_list[0] = HeightSensorRef::EV;
-		fallback_list[1] = HeightSensorRef::BARO;
-		fallback_list[2] = HeightSensorRef::GPS;
-		fallback_list[3] = HeightSensorRef::UNKNOWN;
+		fallback_list[0] = HeightSensorRef::RANGE;
+		fallback_list[1] = HeightSensorRef::EV;
+		fallback_list[2] = HeightSensorRef::BARO;
+		fallback_list[3] = HeightSensorRef::GPS;
 		break;
 
 	case HeightSensorRef::EV:
-		fallback_list[0] = HeightSensorRef::RANGE;
-		fallback_list[1] = HeightSensorRef::BARO;
-		fallback_list[2] = HeightSensorRef::GPS;
-		fallback_list[3] = HeightSensorRef::UNKNOWN;
+		fallback_list[0] = HeightSensorRef::EV;
+		fallback_list[1] = HeightSensorRef::RANGE;
+		fallback_list[2] = HeightSensorRef::BARO;
+		fallback_list[3] = HeightSensorRef::GPS;
 		break;
 	}
 
