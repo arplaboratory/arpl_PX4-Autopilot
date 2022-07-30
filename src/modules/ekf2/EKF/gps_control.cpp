@@ -49,12 +49,27 @@ void Ekf::controlGpsFusion()
 	// Check for new GPS data that has fallen behind the fusion time horizon
 	if (_gps_data_ready) {
 
-		updateGpsYaw(_gps_sample_delayed);
-		updateGpsVel(_gps_sample_delayed);
-		updateGpsPos(_gps_sample_delayed);
-
+		const gpsSample &gps_sample{_gps_sample_delayed};
 		const bool gps_checks_passing = isTimedOut(_last_gps_fail_us, (uint64_t)5e6);
 		const bool gps_checks_failing = isTimedOut(_last_gps_pass_us, (uint64_t)5e6);
+
+		if (!_control_status.flags.yaw_align && _control_status.flags.tilt_align
+		    && gps_checks_passing && !gps_checks_failing) {
+
+			if (resetYawToEKFGSF()) {
+				ECL_INFO("Yaw aligned using IMU and GPS");
+
+			} else if (resetYawToGps(gps_sample)) {
+				ECL_INFO("Yaw aligned using GPS yaw");
+
+			} else if (realignYawGPS(gps_sample)) {
+				ECL_INFO("Yaw aligned using GPS course");
+			}
+		}
+
+		updateGpsYaw(gps_sample);
+		updateGpsVel(gps_sample);
+		updateGpsPos(gps_sample);
 
 		controlGpsYawFusion(gps_checks_passing, gps_checks_failing);
 
@@ -76,7 +91,7 @@ void Ekf::controlGpsFusion()
 					fuseGpsPos();
 
 					if (shouldResetGpsFusion()) {
-						const bool was_gps_signal_lost = isTimedOut(_time_prev_gps_us, 1000000);
+						const bool was_gps_signal_lost = isTimedOut(_time_prev_gps_us, 1'000'000);
 
 						/* A reset is not performed when getting GPS back after a significant period of no data
 						 * because the timeout could have been caused by bad GPS.
@@ -85,27 +100,67 @@ void Ekf::controlGpsFusion()
 						if (isYawFailure()
 						    && _control_status.flags.in_air
 						    && !was_gps_signal_lost
-						    && _ekfgsf_yaw_reset_count < _params.EKFGSF_reset_count_limit
-						    && isTimedOut(_ekfgsf_yaw_reset_time, 5000000)) {
-							// The minimum time interval between resets to the EKF-GSF estimate is limited to allow the EKF-GSF time
-							// to improve its estimate if the previous reset was not successful.
-							if (resetYawToEKFGSF()) {
-								ECL_WARN("GPS emergency yaw reset");
+						    && resetYawToEKFGSF()) {
+
+							ECL_WARN("GPS emergency yaw reset");
+
+							if (_control_status.flags.mag_hdg || _control_status.flags.mag_3D) {
+								// stop using the magnetometer in the main EKF otherwise it's fusion could drag the yaw around
+								// and cause another navigation failure
+								_control_status.flags.mag_fault = true;
+								_warning_events.flags.emergency_yaw_reset_mag_stopped = true;
+								stopMagFusion();
+
+							} else if (_control_status.flags.gps_yaw) {
+								_control_status.flags.gps_yaw_fault = true;
+								_warning_events.flags.emergency_yaw_reset_gps_yaw_stopped = true;
+								stopGpsYawFusion();
+
+							} else if (_control_status.flags.ev_yaw) {
+								stopEvYawFusion();
 							}
 
 						} else {
-							// use GPS velocity data to check and correct yaw angle if a FW vehicle
-							if (_control_status.flags.fixed_wing && _control_status.flags.in_air) {
-								// if flying a fixed wing aircraft, do a complete reset that includes yaw
-								_mag_yaw_reset_req = true;
-							}
-
 							_warning_events.flags.gps_fusion_timout = true;
 							ECL_WARN("GPS fusion timeout - resetting");
+
+							// use GPS velocity data to check and correct yaw angle if a FW vehicle
+							if (_control_status.flags.fixed_wing && _control_status.flags.in_air) {
+								// calculate GPS course over ground angle
+								const float cog_gps = atan2f(gps_sample.vel(1), gps_sample.vel(0));
+
+								// calculate course yaw angle
+								const float cog_ekf = atan2f(_state.vel(1), _state.vel(0));
+
+								// Check the EKF and GPS course over ground for consistency
+								const float course_yaw_error = wrap_pi(cog_gps - cog_ekf);
+
+								// If the angles disagree and horizontal GPS velocity innovations are large or no previous yaw alignment, we declare the magnetic yaw as bad
+								if (fabsf(course_yaw_error) > math::radians(25.f)) {
+									_num_bad_flight_yaw_events++;
+
+									_warning_events.flags.bad_yaw_using_gps_course = true;
+									ECL_WARN("bad yaw, using GPS course");
+
+									if (_control_status.flags.mag_hdg || _control_status.flags.mag_3D) {
+
+										// declare the magnetometer as failed if a bad yaw has occurred more than once
+										if (_control_status.flags.mag_aligned_in_flight
+										    && (_num_bad_flight_yaw_events >= 2)) {
+
+											_control_status.flags.mag_fault = true;
+
+											stopMagFusion();
+										}
+									}
+
+									realignYawGPS(gps_sample);
+								}
+							}
 						}
 
-						resetVelocityToGps(_gps_sample_delayed);
-						resetHorizontalPositionToGps(_gps_sample_delayed);
+						resetVelocityToGps(gps_sample);
+						resetHorizontalPositionToGps(gps_sample);
 					}
 
 				} else {
@@ -126,30 +181,22 @@ void Ekf::controlGpsFusion()
 
 		} else {
 			if (starting_conditions_passing) {
-				// Do not use external vision for yaw if using GPS because yaw needs to be
-				// defined relative to an NED reference frame
-				if (_control_status.flags.ev_yaw
-				    || _mag_inhibit_yaw_reset_req
-				    || _mag_yaw_reset_req) {
 
-					_mag_yaw_reset_req = true;
-
+				if (_control_status.flags.ev_yaw) {
 					// Stop the vision for yaw fusion and do not allow it to start again
 					stopEvYawFusion();
 					_inhibit_ev_yaw_use = true;
-
-				} else {
-					startGpsFusion();
 				}
 
-			} else if (gps_checks_passing && !_control_status.flags.yaw_align && (_params.mag_fusion_type == MagFuseType::NONE)) {
-				// If no mag is used, align using the yaw estimator (if available)
-				if (resetYawToEKFGSF()) {
-					_information_events.flags.yaw_aligned_to_imu_gps = true;
-					ECL_INFO("Yaw aligned using IMU and GPS");
-					resetVelocityToGps(_gps_sample_delayed);
-					resetHorizontalPositionToGps(_gps_sample_delayed);
+				if (!isHorizontalAidingActive()) {
+					resetVelocityToGps(gps_sample);
 				}
+
+				resetHorizontalPositionToGps(gps_sample);
+
+				_information_events.flags.starting_gps_fusion = true;
+				ECL_INFO("starting GPS fusion");
+				_control_status.flags.gps = true;
 			}
 		}
 
