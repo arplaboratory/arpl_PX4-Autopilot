@@ -751,9 +751,9 @@ bool Ekf::setEkfGlobalOrigin(const double latitude, const double longitude, cons
 
 			resetVerticalPositionTo(_gps_alt_ref - current_alt);
 
-			_baro_b_est.setBias(_baro_b_est.getBias() - _state_reset_status.posD_change);
-			_rng_hgt_b_est.setBias(_rng_hgt_b_est.getBias() - _state_reset_status.posD_change);
-			_ev_hgt_b_est.setBias(_ev_hgt_b_est.getBias() + _state_reset_status.posD_change);
+			_baro_b_est.setBias(_baro_b_est.getBias() + _state_reset_status.posD_change);
+			_rng_hgt_b_est.setBias(_rng_hgt_b_est.getBias() + _state_reset_status.posD_change);
+			_ev_hgt_b_est.setBias(_ev_hgt_b_est.getBias() - _state_reset_status.posD_change);
 		}
 
 		return true;
