@@ -97,9 +97,13 @@ ControlAllocator::init()
 		PX4_ERR("callback registration failed");
 		return false;
 	}
+//    if (!_direct_motor_command_sub.registerCallback()) {
+//        PX4_ERR("callback registration failed");
+//        return false;
+//    }
 
 #ifndef ENABLE_LOCKSTEP_SCHEDULER // Backup schedule would interfere with lockstep
-	ScheduleDelayed(50_ms);
+	ScheduleDelayed(5_ms);
 #endif
 
 	return true;
@@ -292,6 +296,7 @@ ControlAllocator::Run()
 	if (should_exit()) {
 		_vehicle_torque_setpoint_sub.unregisterCallback();
 		_vehicle_thrust_setpoint_sub.unregisterCallback();
+        PX4_INFO("Exited Control Allocator Run");
 		exit_and_cleanup();
 		return;
 	}
@@ -300,7 +305,7 @@ ControlAllocator::Run()
 
 #ifndef ENABLE_LOCKSTEP_SCHEDULER // Backup schedule would interfere with lockstep
 	// Push backup schedule
-	ScheduleDelayed(50_ms);
+	ScheduleDelayed(5_ms);
 #endif
 
 	// Check if parameters have changed
@@ -318,6 +323,7 @@ ControlAllocator::Run()
 	}
 
 	if (_num_control_allocation == 0 || _actuator_effectiveness == nullptr) {
+        PX4_INFO("Return from Control Allocator Run because of num_control_alloc");
 		return;
 	}
 
@@ -380,6 +386,16 @@ ControlAllocator::Run()
 			_timestamp_sample = vehicle_thrust_setpoint.timestamp_sample;
 		}
 	}
+
+//    double x= _thrust_sp(0);
+//    double y = _thrust_sp(1);
+//    double z = _thrust_sp(2);
+//
+//    double mx= _torque_sp(0);
+//    double my = _torque_sp(1);
+//    double mz = _torque_sp(2);
+//    PX4_INFO("Thrust Setpoint %f, %f, %f", x, y, z);
+//    PX4_INFO("Torque Setpoint %f, %f, %f", mx, my, mz);
 
 	if (do_update) {
 		_last_run = now;
@@ -630,11 +646,22 @@ ControlAllocator::publish_actuator_controls()
 	actuator_motors.timestamp = hrt_absolute_time();
 	actuator_motors.timestamp_sample = _timestamp_sample;
 
+    direct_motor_command_s motor_cmd_s;
+    actuator_motors_s actuator_motors_off_board;
+
+    _direct_motor_command_sub.copy(&motor_cmd_s);
+    actuator_motors_off_board.timestamp = hrt_absolute_time();
+    actuator_motors_off_board.timestamp_sample = _timestamp_sample;
+    for(int i = 0; i < 4; i++){
+        actuator_motors_off_board.control[i] = motor_cmd_s.controls[i];
+    }
+
 	actuator_servos_s actuator_servos;
 	actuator_servos.timestamp = actuator_motors.timestamp;
 	actuator_servos.timestamp_sample = _timestamp_sample;
 
 	actuator_motors.reversible_flags = _param_r_rev.get();
+    actuator_motors_off_board.reversible_flags = _param_r_rev.get();
 
 	int actuator_idx = 0;
 	int actuator_idx_matrix[ActuatorEffectiveness::MAX_NUM_MATRICES] {};
@@ -659,9 +686,24 @@ ControlAllocator::publish_actuator_controls()
 
 	for (int i = motors_idx; i < actuator_motors_s::NUM_CONTROLS; i++) {
 		actuator_motors.control[i] = NAN;
+        actuator_motors_off_board.control[i] = NAN;
 	}
 
-	_actuator_motors_pub.publish(actuator_motors);
+
+    vehicle_control_mode_s vehicle_control_mode;
+    _vehicle_control_mode_sub.copy(&vehicle_control_mode);
+//
+    if (vehicle_control_mode.flag_control_offboard_enabled) {
+        _actuator_motors_pub.publish(actuator_motors_off_board);
+        PX4_INFO("ONboard: [%f], [%f], [%f], [%f]", (double)actuator_motors.control[0],
+                 (double)actuator_motors.control[1], (double)actuator_motors.control[2], (double)actuator_motors.control[3]);
+        PX4_INFO("Offboard: [%f], [%f], [%f], [%f]", (double)actuator_motors_off_board.control[0],
+                 (double)actuator_motors_off_board.control[1], (double)actuator_motors_off_board.control[2], (double)actuator_motors_off_board.control[3]);
+    }
+
+    if (!vehicle_control_mode.flag_control_offboard_enabled) {
+        _actuator_motors_pub.publish(actuator_motors);
+    }
 
 	// servos
 	if (_num_actuators[1] > 0) {

@@ -262,6 +262,11 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 		handle_message_statustext(msg);
 		break;
 
+    case MAVLINK_MSG_ID_DIRECT_MOTOR_COMMAND:
+        handle_message_direct_motor_command_msg(msg);
+        break;
+
+
 #if !defined(CONSTRAINED_FLASH)
 
 	case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
@@ -3476,4 +3481,36 @@ void MavlinkReceiver::stop()
 {
 	_should_exit.store(true);
 	pthread_join(_thread, nullptr);
+}
+
+void MavlinkReceiver::handle_message_direct_motor_command_msg(mavlink_message_t *msg) {
+
+    mavlink_direct_motor_command_t cmd;
+    mavlink_msg_direct_motor_command_decode(msg, &cmd);
+
+    direct_motor_command_s dmc{};
+    vehicle_control_mode_s vehicle_control_mode;
+    _vehicle_control_mode_sub.copy(&vehicle_control_mode);
+//    actuator_motors_s act;
+
+//    memset(&f, 0, sizeof(f));
+//    memset(&act, 0, sizeof(act));
+    const bool motors = true;
+    offboard_control_mode_s ocm{};
+    ocm.motors = motors;
+    ocm.timestamp = hrt_absolute_time();
+    dmc.timestamp = hrt_absolute_time();
+//    act.timestamp = hrt_absolute_time();
+    _offboard_control_mode_pub.publish(ocm);
+    for(int i = 0; i < 4; i++){
+        dmc.controls[i] = cmd.controls[i];
+//        act.control[i] = cmd.controls[i];
+    }
+//    if(vehicle_control_mode.flag_control_offboard_enabled){
+//        _actuator_motors_pub.publish(act);
+//    }
+
+
+_direct_motor_command_msg_pub.publish(dmc);
+//    _actuator_motors_pub.publish(act);
 }

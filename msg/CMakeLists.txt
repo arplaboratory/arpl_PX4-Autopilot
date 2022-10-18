@@ -63,6 +63,7 @@ set(msg_files
 	control_allocator_status.msg
 	cpuload.msg
 	differential_pressure.msg
+	direct_motor_command.msg
 	distance_sensor.msg
 	ekf2_timestamps.msg
 	esc_report.msg

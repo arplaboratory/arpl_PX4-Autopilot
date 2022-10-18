@@ -98,4 +98,4 @@ parameters:
             min: 0
             max: 400
             instance_start: 1
-            default: 50
+            default: 200

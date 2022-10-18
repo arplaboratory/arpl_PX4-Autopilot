@@ -2394,8 +2394,8 @@ Commander::run()
 					_auto_disarm_landed.set_state_and_update(_vehicle_land_detected.landed, hrt_absolute_time());
 
 				} else if (_param_com_disarm_preflight.get() > 0 && !_have_taken_off_since_arming) {
-					_auto_disarm_landed.set_hysteresis_time_from(false, _param_com_disarm_preflight.get() * 1_s);
-					_auto_disarm_landed.set_state_and_update(true, hrt_absolute_time());
+//					_auto_disarm_landed.set_hysteresis_time_from(false, _param_com_disarm_preflight.get() * 1_s);
+//					_auto_disarm_landed.set_state_and_update(true, hrt_absolute_time());
 				}
 
 				if (_auto_disarm_landed.get_state()) {
@@ -4395,12 +4395,13 @@ Commander::offboard_control_update()
 			    old.acceleration != ocm.acceleration ||
 			    old.attitude != ocm.attitude ||
 			    old.body_rate != ocm.body_rate ||
-			    old.actuator != ocm.actuator) {
+			    old.actuator != ocm.actuator ||
+                old.motors != ocm.motors) {
 
 				_status_changed = true;
 			}
 
-			if (ocm.position || ocm.velocity || ocm.acceleration || ocm.attitude || ocm.body_rate || ocm.actuator) {
+			if (ocm.position || ocm.velocity || ocm.acceleration || ocm.attitude || ocm.body_rate || ocm.actuator || ocm.motors) {
 				offboard_available = true;
 			}
 		}

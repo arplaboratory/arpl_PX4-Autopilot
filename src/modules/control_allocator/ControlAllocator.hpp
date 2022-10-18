@@ -75,6 +75,8 @@
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/failure_detector_status.h>
+#include <uORB/topics/direct_motor_command.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 class ControlAllocator : public ModuleBase<ControlAllocator>, public ModuleParams, public px4::ScheduledWorkItem
 {
@@ -170,6 +172,8 @@ private:
 	uORB::SubscriptionCallbackWorkItem _vehicle_torque_setpoint_sub{this, ORB_ID(vehicle_torque_setpoint)};  /**< vehicle torque setpoint subscription */
 	uORB::SubscriptionCallbackWorkItem _vehicle_thrust_setpoint_sub{this, ORB_ID(vehicle_thrust_setpoint)};	 /**< vehicle thrust setpoint subscription */
 
+    uORB::Subscription _direct_motor_command_sub{ORB_ID(direct_motor_command)};
+
 	uORB::Subscription _vehicle_torque_setpoint1_sub{ORB_ID(vehicle_torque_setpoint), 1};  /**< vehicle torque setpoint subscription (2. instance) */
 	uORB::Subscription _vehicle_thrust_setpoint1_sub{ORB_ID(vehicle_thrust_setpoint), 1};	 /**< vehicle thrust setpoint subscription (2. instance) */
 
@@ -184,6 +188,8 @@ private:
 
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 	uORB::Subscription _failure_detector_status_sub{ORB_ID(failure_detector_status)};
+    uORB::Subscription _vehicle_control_mode_sub{ORB_ID(vehicle_control_mode)};
+//    uORB::Subscription _direct_motor_command_sub{ORB_ID(direct_motor_command)};
 
 	matrix::Vector3f _torque_sp;
 	matrix::Vector3f _thrust_sp;
@@ -196,6 +202,7 @@ private:
 
 	bool _armed{false};
 	hrt_abstime _last_run{0};
+    hrt_abstime _last_offboard_pub{0};
 	hrt_abstime _timestamp_sample{0};
 	hrt_abstime _last_status_pub{0};
 

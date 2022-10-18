@@ -8,3 +8,4 @@ bool acceleration
 bool attitude
 bool body_rate
 bool actuator
+bool motors
