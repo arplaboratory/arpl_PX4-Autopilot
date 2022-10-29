@@ -98,6 +98,8 @@ MulticopterAttitudeControl::parameters_updated()
 						radians(_param_mc_yawrate_max.get())));
 
 	_man_tilt_max = math::radians(_param_mpc_man_tilt_max.get());
+
+    _attitude_control.setSo3Params(_param_so3_roll_gain.get(), _param_so3_pitch_gain.get(), _param_so3_yaw_gain.get());
 }
 
 float
@@ -267,6 +269,18 @@ MulticopterAttitudeControl::Run()
 			}
 		}
 
+        // Check for new So3 setpoint
+        if (_so3_command_sub.updated()){
+            so3_command_s so3_cmd_sp;
+
+            if(_so3_command_sub.copy(&so3_cmd_sp)){
+                const matrix::Vector3f rates{so3_cmd_sp.roll_body_rate,
+                                       so3_cmd_sp.pitch_body_rate,
+                                       so3_cmd_sp.yaw_body_rate};
+                _attitude_control.setSo3RatesCommand(rates);
+            }
+        }
+
 		// Check for a heading reset
 		if (_quat_reset_counter != v_att.quat_reset_counter) {
 			const Quatf delta_q_reset(v_att.delta_q_reset);
@@ -331,6 +345,15 @@ MulticopterAttitudeControl::Run()
 
 			Vector3f rates_sp = _attitude_control.update(q);
 
+            Vector3f att_signal = _attitude_control.getAttitudeSignal(q);
+            Vector3f rates_signal;
+            _attitude_control.getSo3RatesCommand(rates_signal);
+            so3_attitude_signal_s so3_signal_msg{};
+            for(int i = 0; i < 3; i++){
+                so3_signal_msg.kr_er[i] = att_signal(i);
+                so3_signal_msg.rates_sp[i] = rates_signal(i);
+            }
+
 			const hrt_abstime now = hrt_absolute_time();
 			autotune_attitude_control_status_s pid_autotune;
 
@@ -353,6 +376,9 @@ MulticopterAttitudeControl::Run()
 			v_rates_sp.timestamp = hrt_absolute_time();
 
 			_v_rates_sp_pub.publish(v_rates_sp);
+
+            so3_signal_msg.timestamp = hrt_absolute_time();
+            _so3_attitude_signal_pub.publish(so3_signal_msg);
 		}
 
 		// reset yaw setpoint during transitions, tailsitter.cpp generates

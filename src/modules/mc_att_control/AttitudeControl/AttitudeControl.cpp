@@ -108,3 +108,33 @@ matrix::Vector3f AttitudeControl::update(const Quatf &q) const
 
 	return rate_setpoint;
 }
+
+matrix::Vector3f AttitudeControl::getAttitudeSignal(const Quatf &q)  {
+
+    // Generate Rotation matrices from the desired and current orientations
+
+    Dcm<float> rotation_des(_attitude_setpoint_q);
+    Dcm<float> rotation_curr(q);
+
+    Dcm<float> error_matrix = 0.5f * (rotation_des.transpose() * rotation_curr - rotation_curr.transpose() * rotation_des);
+
+    matrix::Vector3f error_att = error_matrix.vee();
+
+    _so3_rates_sp = rotation_curr.transpose() * rotation_des * _so3_des_omega;
+
+    return _so3_gains * error_att;
+}
+
+void AttitudeControl::setSo3Params(const float k_roll, const float k_pitch, const float k_yaw) {
+    _so3_gains(0, 0) = k_roll;
+    _so3_gains(1, 1) = k_pitch;
+    _so3_gains(2, 2) = k_yaw;
+}
+
+void AttitudeControl::setSo3RatesCommand(const Vector3f &so3_rates) {
+    _so3_des_omega = so3_rates;
+}
+
+void AttitudeControl::getSo3RatesCommand(Vector3f &so3_rates) {
+    so3_rates = _so3_rates_sp;
+}

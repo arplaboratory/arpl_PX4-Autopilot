@@ -1629,6 +1629,21 @@ MavlinkReceiver::handle_message_set_attitude_target(mavlink_message_t *msg)
 				_rates_sp_pub.publish(setpoint);
 			}
 		}
+
+        // adding publisher for so3 command
+        so3_command_s so3_cmd{};
+        const matrix::Quatf qd{attitude_target.q};
+        qd.copyTo(so3_cmd.q_d);
+        so3_cmd.roll_body_rate = attitude_target.body_roll_rate;
+        so3_cmd.pitch_body_rate = attitude_target.body_pitch_rate;
+        so3_cmd.yaw_body_rate = attitude_target.body_yaw_rate;
+        so3_cmd.thrust = attitude_target.thrust;
+
+        // Publish so3 only once in OFFBOARD
+        if (vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_OFFBOARD){
+            so3_cmd.timestamp = hrt_absolute_time();
+            _so3_cmd_pub.publish(so3_cmd);
+        }
 	}
 }
 

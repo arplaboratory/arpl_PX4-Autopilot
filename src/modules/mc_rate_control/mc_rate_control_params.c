@@ -398,3 +398,43 @@ PARAM_DEFINE_FLOAT(MC_ACRO_SUPEXPOY, 0.7f);
  * @group Multicopter Rate Control
  */
 PARAM_DEFINE_INT32(MC_BAT_SCALE_EN, 0);
+
+
+/**
+ * Geometric Control Rate Gain - Pitch Rate
+ *
+ * This is the gain for the attitude pitch term
+ *
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_PITCH_D_GAIN, 0.1f);
+
+/**
+ * Geometric Control Rate Gain - Roll Rate
+ *
+ * This is the gain for the attitude Roll Rate term
+ *
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_ROLL_D_GAIN, 0.1f);
+
+/**
+ * Geometric Control Rate Gain - Yaw Rate
+ *
+ * This is the gain for the attitude Yaw term
+ *
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_YAW_D_GAIN, 0.05f);

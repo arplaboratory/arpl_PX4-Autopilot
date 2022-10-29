@@ -158,3 +158,43 @@ PARAM_DEFINE_FLOAT(MC_YAWRATE_MAX, 200.0f);
  * @group Multicopter Position Control
  */
 PARAM_DEFINE_FLOAT(MC_MAN_TILT_TAU, 0.0f);
+
+/**
+ * Geometric Control Attitude Gain - Pitch
+ *
+ * This is the gain for the attitude pitch term
+ *
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group Multicopter Position Control
+ */
+PARAM_DEFINE_FLOAT(SO3_PITCH_GAIN, 0.5f);
+
+/**
+ * Geometric Control Attitude Gain - Roll
+ *
+ * This is the gain for the attitude Roll term
+ *
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group Multicopter Position Control
+ */
+PARAM_DEFINE_FLOAT(SO3_ROLL_GAIN, 0.5f);
+
+/**
+ * Geometric Control Attitude Gain - Yaw
+ *
+ * This is the gain for the attitude Yaw term
+ *
+ *
+ * @min 0.0
+ * @max 2.0
+ * @decimal 2
+ * @group Multicopter Position Control
+ */
+PARAM_DEFINE_FLOAT(SO3_YAW_GAIN, 0.2f);
+

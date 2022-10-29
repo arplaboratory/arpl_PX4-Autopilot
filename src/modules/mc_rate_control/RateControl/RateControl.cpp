@@ -109,3 +109,16 @@ void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 	rate_ctrl_status.pitchspeed_integ = _rate_int(1);
 	rate_ctrl_status.yawspeed_integ = _rate_int(2);
 }
+
+matrix::Vector3f RateControl::updateSo3Controller(const Vector3f &rate) {
+    return matrix::Vector3f();
+}
+
+void RateControl::updateSo3setpoints(const Vector3f &att_signal, const Vector3f &rate_signal) {
+    _so3_attitude_signal = att_signal;
+    _so3_desired_rates = rate_signal;
+}
+
+void RateControl::setSo3RateGains(float roll, float pitch, float yaw) {
+    _so3_rates_gain = matrix::Vector3f(roll, pitch, yaw);
+}

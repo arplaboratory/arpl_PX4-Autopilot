@@ -207,6 +207,7 @@ set(msg_files
 	yaw_estimator_status.msg
 		arpl_force_moments.msg
 		so3_command.msg
+		so3_attitude_signal.msg
 
 )
 

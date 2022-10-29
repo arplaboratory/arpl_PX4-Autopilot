@@ -54,6 +54,8 @@
 #include <uORB/topics/vehicle_rates_setpoint.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_land_detected.h>
+#include <uORB/topics/so3_attitude_signal.h>
+#include <uORB/topics/so3_command.h>
 #include <vtol_att_control/vtol_type.h>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 
@@ -109,11 +111,13 @@ private:
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};	/**< manual control setpoint subscription */
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};			/**< vehicle status subscription */
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};	/**< vehicle land detected subscription */
+	uORB::Subscription _so3_command_sub{ORB_ID(so3_command)}; /**< so3 command comming from mavlink receiver  */
 
 	uORB::SubscriptionCallbackWorkItem _vehicle_attitude_sub{this, ORB_ID(vehicle_attitude)};
 
 	uORB::Publication<vehicle_rates_setpoint_s>	_v_rates_sp_pub{ORB_ID(vehicle_rates_setpoint)};			/**< rate setpoint publication */
 	uORB::Publication<vehicle_attitude_setpoint_s>	_vehicle_attitude_setpoint_pub;
+    uORB::Publication<so3_attitude_signal_s> _so3_attitude_signal_pub{ORB_ID(so3_attitude_signal)};
 
 	struct manual_control_setpoint_s	_manual_control_setpoint {};	/**< manual control setpoint */
 	struct vehicle_control_mode_s		_v_control_mode {};	/**< vehicle control mode */
@@ -160,7 +164,10 @@ private:
 		(ParamInt<px4::params::MPC_THR_CURVE>) _param_mpc_thr_curve,				/**< throttle curve behavior */
 
 		(ParamInt<px4::params::MC_AIRMODE>) _param_mc_airmode,
-		(ParamFloat<px4::params::MC_MAN_TILT_TAU>) _param_mc_man_tilt_tau
+		(ParamFloat<px4::params::MC_MAN_TILT_TAU>) _param_mc_man_tilt_tau,
+        (ParamFloat<px4::params::SO3_PITCH_GAIN>) _param_so3_pitch_gain,
+        (ParamFloat<px4::params::SO3_ROLL_GAIN>) _param_so3_roll_gain,
+        (ParamFloat<px4::params::SO3_YAW_GAIN>) _param_so3_yaw_gain
 	)
 };
 

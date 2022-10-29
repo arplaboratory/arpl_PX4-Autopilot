@@ -96,6 +96,8 @@ MulticopterRateControl::parameters_updated()
 				  radians(_param_mc_acro_y_max.get()));
 
 	_actuators_0_circuit_breaker_enabled = circuit_breaker_enabled_by_val(_param_cbrk_rate_ctrl.get(), CBRK_RATE_CTRL_KEY);
+
+    _rate_control.setSo3RateGains(_param_so3_roll_gain.get(), _param_so3_pitch_gain.get(), _param_so3_yaw_gain.get());
 }
 
 void
@@ -199,6 +201,7 @@ MulticopterRateControl::Run()
 		} else {
 			// use rates setpoint topic
 			vehicle_rates_setpoint_s v_rates_sp;
+            so3_attitude_signal_s so3_sp;
 
 			if (_v_rates_sp_sub.update(&v_rates_sp)) {
 				_rates_sp(0) = PX4_ISFINITE(v_rates_sp.roll)  ? v_rates_sp.roll  : rates(0);
@@ -206,7 +209,14 @@ MulticopterRateControl::Run()
 				_rates_sp(2) = PX4_ISFINITE(v_rates_sp.yaw)   ? v_rates_sp.yaw   : rates(2);
 				_thrust_sp = -v_rates_sp.thrust_body[2];
 			}
+
+            if(_so3_signal_sub.update(&so3_sp)){
+                _rate_control.updateSo3setpoints(Vector3f(so3_sp.kr_er), Vector3f(so3_sp.rates_sp));
+            }
+
 		}
+
+
 
 		// run the rate controller
 		if (_v_control_mode.flag_control_rates_enabled && !_actuators_0_circuit_breaker_enabled) {
@@ -241,6 +251,9 @@ MulticopterRateControl::Run()
 			// run rate controller
 			const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 
+            const Vector3f moments = _rate_control.updateSo3Controller(rates);
+
+
 			// publish rate controller status
 			rate_ctrl_status_s rate_ctrl_status{};
 			_rate_control.getRateControlStatus(rate_ctrl_status);
@@ -257,7 +270,14 @@ MulticopterRateControl::Run()
 			actuators.timestamp_sample = angular_velocity.timestamp_sample;
 
 			if (!_vehicle_status.is_vtol) {
-				publishTorqueSetpoint(att_control, angular_velocity.timestamp_sample);
+                vehicle_status_s vehicle_status{};
+                _vehicle_status_sub.copy(&vehicle_status);
+                if (vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_OFFBOARD){
+                    publishTorqueSetpoint(moments, angular_velocity.timestamp_sample);
+                }
+                else {
+                    publishTorqueSetpoint(att_control, angular_velocity.timestamp_sample);
+                }
 				publishThrustSetpoint(angular_velocity.timestamp_sample);
 			}
 

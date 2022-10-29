@@ -100,6 +100,33 @@ public:
 	 */
 	matrix::Vector3f update(const matrix::Quatf &q) const;
 
+    /**
+     *
+     * @param k_roll roll gain; body x axis
+     * @param k_pitch pitch gain, body y axis
+     * @param k_yaw yaw gain, body z axis
+     */
+    void setSo3Params(const float k_roll, const float k_pitch, const float k_yaw);
+
+    /**
+     *
+     * @param q current estimate of vehicle attitude
+     * @return gain amplified attitude errror signal for use in so3_control
+     */
+    matrix::Vector3f getAttitudeSignal(const matrix::Quatf &q);
+
+    /**
+     *
+     * @param so3_rates omega des from so3 command of ROS
+     */
+    void setSo3RatesCommand(const matrix::Vector3f &so3_rates);
+
+    /**
+     *
+     * @param rtn : R.transpose() * R_des * Rates_des
+     */
+    void getSo3RatesCommand(matrix::Vector3f &rtn);
+
 private:
 	matrix::Vector3f _proportional_gain;
 	matrix::Vector3f _rate_limit;
@@ -107,4 +134,8 @@ private:
 
 	matrix::Quatf _attitude_setpoint_q; ///< latest known attitude setpoint e.g. from position control
 	float _yawspeed_setpoint{0.f}; ///< latest known yawspeed feed-forward setpoint
+
+    matrix::Matrix3f _so3_gains; // gains associated with attitude error for geometric control
+    matrix::Vector3f _so3_rates_sp; // R.transpose() * R_des * Rates_des
+    matrix::Vector3f _so3_des_omega;
 };
