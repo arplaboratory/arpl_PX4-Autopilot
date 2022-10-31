@@ -107,6 +107,8 @@ public:
 
     void updateSo3setpoints(const matrix::Vector3f &att_signal, const matrix::Vector3f &rate_signal);
 
+    void updateInertia(float ixx, float iyy, float izz);
+
 private:
 	void updateIntegral(matrix::Vector3f &rate_error, const float dt);
 

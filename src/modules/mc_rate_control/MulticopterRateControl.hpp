@@ -185,7 +185,10 @@ private:
 
         (ParamFloat<px4::params::SO3_PITCH_D_GAIN>) _param_so3_pitch_gain,
         (ParamFloat<px4::params::SO3_ROLL_D_GAIN>) _param_so3_roll_gain,
-        (ParamFloat<px4::params::SO3_YAW_D_GAIN>) _param_so3_yaw_gain
+        (ParamFloat<px4::params::SO3_YAW_D_GAIN>) _param_so3_yaw_gain,
+        (ParamFloat<px4::params::SO3_INERTIA_IXX>) _param_so3_ixx,
+        (ParamFloat<px4::params::SO3_INERTIA_IYY>) _param_so3_iyy,
+        (ParamFloat<px4::params::SO3_INERTIA_IZZ>) _param_izz
 	)
 
 	matrix::Vector3f _acro_rate_max;	/**< max attitude rates in acro mode */

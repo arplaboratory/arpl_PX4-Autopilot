@@ -438,3 +438,37 @@ PARAM_DEFINE_FLOAT(SO3_ROLL_D_GAIN, 0.1f);
  * @group Multicopter Rate Control
  */
 PARAM_DEFINE_FLOAT(SO3_YAW_D_GAIN, 0.05f);
+
+/** Inertia matrix entry IXX
+*
+*
+* @min 0.001
+* @max 2.0
+* @decimal 4
+* @group Multicopter Rate Control
+*/
+PARAM_DEFINE_FLOAT(SO3_INERTIA_IXX, 0.003f);
+
+/**
+ * Inertia matrix entry IYY
+ *
+ *
+ *
+ * @min 0.001
+ * @max 2.0
+ * @decimal 4
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_INERTIA_IYY, 0.003f);
+
+/**
+ * Inertia matrix entry IZZ
+ *
+ *
+ *
+ * @min 0.001
+ * @max 2.0
+ * @decimal 4
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_INERTIA_IZZ, 0.004f);

@@ -111,7 +111,11 @@ void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 }
 
 matrix::Vector3f RateControl::updateSo3Controller(const Vector3f &rate) {
-    return matrix::Vector3f();
+
+    matrix::Vector3f error_omega = rate - _so3_desired_rates;
+    matrix::Vector3f moments = -_so3_attitude_signal - _so3_rates_gain.emult(error_omega) + rate.cross(_inertia * rate);
+
+    return moments;
 }
 
 void RateControl::updateSo3setpoints(const Vector3f &att_signal, const Vector3f &rate_signal) {
@@ -121,4 +125,10 @@ void RateControl::updateSo3setpoints(const Vector3f &att_signal, const Vector3f 
 
 void RateControl::setSo3RateGains(float roll, float pitch, float yaw) {
     _so3_rates_gain = matrix::Vector3f(roll, pitch, yaw);
+}
+
+void RateControl::updateInertia(float ixx, float iyy, float izz) {
+    _inertia(0, 0) = ixx;
+    _inertia(1, 1) = iyy;
+    _inertia(2, 2) = izz;
 }

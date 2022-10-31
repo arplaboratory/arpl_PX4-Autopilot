@@ -98,6 +98,8 @@ MulticopterRateControl::parameters_updated()
 	_actuators_0_circuit_breaker_enabled = circuit_breaker_enabled_by_val(_param_cbrk_rate_ctrl.get(), CBRK_RATE_CTRL_KEY);
 
     _rate_control.setSo3RateGains(_param_so3_roll_gain.get(), _param_so3_pitch_gain.get(), _param_so3_yaw_gain.get());
+
+    _rate_control.updateInertia(_param_so3_ixx.get(), _param_so3_iyy.get(), _param_izz.get());
 }
 
 void
@@ -273,6 +275,7 @@ MulticopterRateControl::Run()
                 vehicle_status_s vehicle_status{};
                 _vehicle_status_sub.copy(&vehicle_status);
                 if (vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_OFFBOARD){
+                    PX4_INFO("Publishing Moments");
                     publishTorqueSetpoint(moments, angular_velocity.timestamp_sample);
                 }
                 else {
