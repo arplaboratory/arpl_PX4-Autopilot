@@ -408,10 +408,10 @@ PARAM_DEFINE_INT32(MC_BAT_SCALE_EN, 0);
  *
  * @min 0.0
  * @max 2.0
- * @decimal 2
+ * @decimal 3
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(SO3_PITCH_D_GAIN, 0.1f);
+PARAM_DEFINE_FLOAT(SO3_PITCH_D_GAIN, 0.025f);
 
 /**
  * Geometric Control Rate Gain - Roll Rate
@@ -421,10 +421,10 @@ PARAM_DEFINE_FLOAT(SO3_PITCH_D_GAIN, 0.1f);
  *
  * @min 0.0
  * @max 2.0
- * @decimal 2
+ * @decimal 3
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(SO3_ROLL_D_GAIN, 0.1f);
+PARAM_DEFINE_FLOAT(SO3_ROLL_D_GAIN, 0.025f);
 
 /**
  * Geometric Control Rate Gain - Yaw Rate
@@ -434,10 +434,10 @@ PARAM_DEFINE_FLOAT(SO3_ROLL_D_GAIN, 0.1f);
  *
  * @min 0.0
  * @max 2.0
- * @decimal 2
+ * @decimal 3
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(SO3_YAW_D_GAIN, 0.05f);
+PARAM_DEFINE_FLOAT(SO3_YAW_D_GAIN, 0.01f);
 
 /** Inertia matrix entry IXX
 *
@@ -472,3 +472,46 @@ PARAM_DEFINE_FLOAT(SO3_INERTIA_IYY, 0.003f);
  * @group Multicopter Rate Control
  */
 PARAM_DEFINE_FLOAT(SO3_INERTIA_IZZ, 0.004f);
+
+/** integral gain for roll rate
+*
+*
+* @min 0.001
+* @max 2.0
+* @decimal 4
+* @group Multicopter Rate Control
+*/
+PARAM_DEFINE_FLOAT(SO3_INT_ROLL, 0.01f);
+
+/**
+ * integral gain for pitch rate
+ *
+ *
+ *
+ * @min 0.001
+ * @max 2.0
+ * @decimal 4
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_INT_PITCH, 0.01f);
+
+/**
+ * integral gain for yaw rate
+ *
+ *
+ *
+ * @min 0.001
+ * @max 2.0
+ * @decimal 4
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_INT_YAW, 0.005f);
+
+/**
+ * Boolean whether to use so3 low level control or not
+ *
+ *
+ * @boolean
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_INT32(USE_SO3, 1);

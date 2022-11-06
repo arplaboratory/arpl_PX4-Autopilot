@@ -100,6 +100,10 @@ MulticopterRateControl::parameters_updated()
     _rate_control.setSo3RateGains(_param_so3_roll_gain.get(), _param_so3_pitch_gain.get(), _param_so3_yaw_gain.get());
 
     _rate_control.updateInertia(_param_so3_ixx.get(), _param_so3_iyy.get(), _param_izz.get());
+
+    _rate_control.updateSo3IntGains(_param_so3_int_x.get(), _param_so3_int_y.get(), _param_so3_int_z.get());
+
+    _use_so3 = _param_use_so3.get();
 }
 
 void
@@ -226,6 +230,7 @@ MulticopterRateControl::Run()
 			// reset integral if disarmed
 			if (!_v_control_mode.flag_armed || _vehicle_status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING) {
 				_rate_control.resetIntegral();
+                _rate_control.resetSo3Integral();
 			}
 
 			// update saturation status from control allocation feedback
@@ -253,7 +258,7 @@ MulticopterRateControl::Run()
 			// run rate controller
 			const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 
-            const Vector3f moments = _rate_control.updateSo3Controller(rates);
+            const Vector3f moments = _rate_control.updateSo3Controller(rates, dt);
 
 
 			// publish rate controller status
@@ -275,7 +280,6 @@ MulticopterRateControl::Run()
                 vehicle_status_s vehicle_status{};
                 _vehicle_status_sub.copy(&vehicle_status);
                 if (vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_OFFBOARD){
-                    PX4_INFO("Publishing Moments");
                     publishTorqueSetpoint(moments, angular_velocity.timestamp_sample);
                 }
                 else {

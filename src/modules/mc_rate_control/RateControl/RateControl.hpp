@@ -103,11 +103,17 @@ public:
     void setSo3RateGains(float roll, float pitch, float yaw);
 
     // Geometric Control Functions
-    matrix::Vector3f updateSo3Controller(const matrix::Vector3f &rate);
+    matrix::Vector3f updateSo3Controller(const matrix::Vector3f &rate, const float dt);
 
     void updateSo3setpoints(const matrix::Vector3f &att_signal, const matrix::Vector3f &rate_signal);
 
     void updateInertia(float ixx, float iyy, float izz);
+
+    void updateSo3RateIntegral(matrix::Vector3f &rate_error, const float dt);
+
+    void updateSo3IntGains(float roll, float pitch, float yaw);
+
+    void resetSo3Integral() {    _so3_rate_int.zero();   }
 
 private:
 	void updateIntegral(matrix::Vector3f &rate_error, const float dt);
@@ -121,6 +127,7 @@ private:
 
 	// States
 	matrix::Vector3f _rate_int; ///< integral term of the rate controller
+	matrix::Vector3f _so3_rate_int;
 
 	// Feedback from control allocation
 	matrix::Vector<bool, 3> _control_allocator_saturation_negative;
@@ -131,6 +138,7 @@ private:
     matrix::Vector3f _so3_attitude_signal;
     matrix::Matrix3f _inertia;
     matrix::Vector3f _so3_desired_rates;
+    matrix::Vector3f _so3_i_rate_gain;
 
 
 };

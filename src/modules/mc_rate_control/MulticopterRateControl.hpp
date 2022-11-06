@@ -147,6 +147,8 @@ private:
 	float _energy_integration_time{0.0f};
 	float _control_energy[4] {};
 
+    bool _use_so3{false};
+
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::MC_ROLLRATE_P>) _param_mc_rollrate_p,
 		(ParamFloat<px4::params::MC_ROLLRATE_I>) _param_mc_rollrate_i,
@@ -188,7 +190,12 @@ private:
         (ParamFloat<px4::params::SO3_YAW_D_GAIN>) _param_so3_yaw_gain,
         (ParamFloat<px4::params::SO3_INERTIA_IXX>) _param_so3_ixx,
         (ParamFloat<px4::params::SO3_INERTIA_IYY>) _param_so3_iyy,
-        (ParamFloat<px4::params::SO3_INERTIA_IZZ>) _param_izz
+        (ParamFloat<px4::params::SO3_INERTIA_IZZ>) _param_izz,
+        (ParamFloat<px4::params::SO3_INT_ROLL>) _param_so3_int_x,
+        (ParamFloat<px4::params::SO3_INT_PITCH>) _param_so3_int_y,
+        (ParamFloat<px4::params::SO3_INT_YAW>) _param_so3_int_z,
+        (ParamBool<px4::params::USE_SO3>) _param_use_so3
+
 	)
 
 	matrix::Vector3f _acro_rate_max;	/**< max attitude rates in acro mode */

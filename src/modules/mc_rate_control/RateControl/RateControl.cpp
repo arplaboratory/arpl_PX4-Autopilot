@@ -110,11 +110,12 @@ void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 	rate_ctrl_status.yawspeed_integ = _rate_int(2);
 }
 
-matrix::Vector3f RateControl::updateSo3Controller(const Vector3f &rate) {
+matrix::Vector3f RateControl::updateSo3Controller(const Vector3f &rate, const float dt) {
 
     matrix::Vector3f error_omega = rate - _so3_desired_rates;
-    matrix::Vector3f moments = -_so3_attitude_signal - _so3_rates_gain.emult(error_omega) + rate.cross(_inertia * rate);
-
+    matrix::Vector3f moments = -_so3_attitude_signal - _so3_rates_gain.emult(error_omega) + rate.cross(_inertia * rate)
+            + _so3_rate_int;
+    updateSo3RateIntegral(error_omega, dt);
     return moments;
 }
 
@@ -131,4 +132,40 @@ void RateControl::updateInertia(float ixx, float iyy, float izz) {
     _inertia(0, 0) = ixx;
     _inertia(1, 1) = iyy;
     _inertia(2, 2) = izz;
+}
+
+void RateControl::updateSo3RateIntegral(Vector3f &rate_error, const float dt) {
+
+    for (int i = 0; i < 3; i++) {
+        // prevent further positive control saturation
+        if (_control_allocator_saturation_positive(i)) {
+            rate_error(i) = math::min(rate_error(i), 0.f);
+        }
+
+        // prevent further negative control saturation
+        if (_control_allocator_saturation_negative(i)) {
+            rate_error(i) = math::max(rate_error(i), 0.f);
+        }
+
+        // I term factor: reduce the I gain with increasing rate error.
+        // This counteracts a non-linear effect where the integral builds up quickly upon a large setpoint
+        // change (noticeable in a bounce-back effect after a flip).
+        // The formula leads to a gradual decrease w/o steps, while only affecting the cases where it should:
+        // with the parameter set to 400 degrees, up to 100 deg rate error, i_factor is almost 1 (having no effect),
+        // and up to 200 deg error leads to <25% reduction of I.
+        float i_factor = rate_error(i) / math::radians(400.f);
+        i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
+
+        // Perform the integration using a first order method
+        float rate_i = _so3_rate_int(i) + i_factor * _so3_i_rate_gain(i) * rate_error(i) * dt;
+
+        // do not propagate the result if out of range or invalid
+        if (PX4_ISFINITE(rate_i)) {
+            _so3_rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
+        }
+    }
+}
+
+void RateControl::updateSo3IntGains(float roll, float pitch, float yaw) {
+    _so3_i_rate_gain = matrix::Vector3f(roll, pitch, yaw);
 }
