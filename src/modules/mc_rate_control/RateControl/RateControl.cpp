@@ -169,3 +169,30 @@ void RateControl::updateSo3RateIntegral(Vector3f &rate_error, const float dt) {
 void RateControl::updateSo3IntGains(float roll, float pitch, float yaw) {
     _so3_i_rate_gain = matrix::Vector3f(roll, pitch, yaw);
 }
+
+matrix::Vector3f
+RateControl::updateSo3ControllerAll(const Vector3f &rate, const Quaternion<float> &att, const float dt,
+                                    const matrix::Vector3f &angular_accel) {
+
+    matrix::Dcm<float> curr_R(att);
+    Dcm<float> error_matrix = 0.5f * (_so3_R_des.transpose() * curr_R - curr_R.transpose() * _so3_R_des);
+    matrix::Vector3f error_att = error_matrix.vee();
+
+    matrix::Vector3f error_rate = rate - curr_R.transpose() * _so3_R_des * _so3_rate_des;
+
+    matrix::Vector3f moments = -error_att.emult(_so3_att_gain) - error_rate.emult(_so3_rates_gain) +
+                            rate.cross(_inertia * rate) - _so3_rate_int - _gain_d.emult(angular_accel);
+
+    updateSo3RateIntegral(error_rate, dt);
+
+    return moments;
+}
+
+void RateControl::updateSo3AttandRateSp(const Quaternion<float> &att_sp, const Vector3f &rate_sp) {
+    _so3_R_des = matrix::Dcm<float>(att_sp);
+    _so3_rate_des = rate_sp;
+}
+
+void RateControl::setSo3AttGains(float roll, float pitch, float yaw) {
+    _so3_att_gain = matrix::Vector3f(roll, pitch, yaw);
+}

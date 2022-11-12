@@ -65,6 +65,9 @@
 #include <uORB/topics/vehicle_torque_setpoint.h>
 #include <uORB/topics/so3_attitude_signal.h>
 #include <uORB/topics/arpl_force_moments.h>
+#include <uORB/topics/so3_command.h>
+#include <uORB/topics/vehicle_attitude.h>
+
 
 using namespace time_literals;
 
@@ -110,10 +113,12 @@ private:
 	uORB::Subscription _vehicle_land_detected_sub{ORB_ID(vehicle_land_detected)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
     uORB::Subscription _so3_signal_sub{ORB_ID(so3_attitude_signal)};
+    uORB::Subscription _so3_command_sub{ORB_ID(so3_command)};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	uORB::SubscriptionCallbackWorkItem _vehicle_angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
+    uORB::SubscriptionCallbackWorkItem _vehicle_attitude_sub{this, ORB_ID(vehicle_attitude)};
 
 	uORB::Publication<actuator_controls_s>		_actuators_0_pub;
 	uORB::Publication<actuator_controls_status_s>	_actuator_controls_status_0_pub{ORB_ID(actuator_controls_status_0)};
@@ -194,7 +199,10 @@ private:
         (ParamFloat<px4::params::SO3_INT_ROLL>) _param_so3_int_x,
         (ParamFloat<px4::params::SO3_INT_PITCH>) _param_so3_int_y,
         (ParamFloat<px4::params::SO3_INT_YAW>) _param_so3_int_z,
-        (ParamBool<px4::params::USE_SO3>) _param_use_so3
+        (ParamBool<px4::params::SO3_ENABLE>) _param_use_so3,
+        (ParamFloat<px4::params::SO3_PITCH_GAIN>) _param_so3_pitch_gain_att,
+        (ParamFloat<px4::params::SO3_ROLL_GAIN>) _param_so3_roll_gain_att,
+        (ParamFloat<px4::params::SO3_YAW_GAIN>) _param_so3_yaw_gain_att
 
 	)
 

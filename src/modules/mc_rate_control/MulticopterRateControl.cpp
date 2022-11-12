@@ -104,6 +104,9 @@ MulticopterRateControl::parameters_updated()
     _rate_control.updateSo3IntGains(_param_so3_int_x.get(), _param_so3_int_y.get(), _param_so3_int_z.get());
 
     _use_so3 = _param_use_so3.get();
+
+    _rate_control.setSo3AttGains(_param_so3_roll_gain_att.get(), _param_so3_pitch_gain_att.get(),
+                                 _param_so3_yaw_gain_att.get());
 }
 
 void
@@ -111,6 +114,7 @@ MulticopterRateControl::Run()
 {
 	if (should_exit()) {
 		_vehicle_angular_velocity_sub.unregisterCallback();
+        _vehicle_attitude_sub.unregisterCallback();
 		exit_and_cleanup();
 		return;
 	}
@@ -129,9 +133,10 @@ MulticopterRateControl::Run()
 
 	/* run controller on gyro changes */
 	vehicle_angular_velocity_s angular_velocity;
+    vehicle_attitude_s att;
 
 	if (_vehicle_angular_velocity_sub.update(&angular_velocity)) {
-
+        _vehicle_attitude_sub.copy(&att);
 		// grab corresponding vehicle_angular_acceleration immediately after vehicle_angular_velocity copy
 		vehicle_angular_acceleration_s v_angular_acceleration{};
 		_vehicle_angular_acceleration_sub.copy(&v_angular_acceleration);
@@ -208,7 +213,7 @@ MulticopterRateControl::Run()
 			// use rates setpoint topic
 			vehicle_rates_setpoint_s v_rates_sp;
             so3_attitude_signal_s so3_sp;
-
+            so3_command_s so3_cmd;
 			if (_v_rates_sp_sub.update(&v_rates_sp)) {
 				_rates_sp(0) = PX4_ISFINITE(v_rates_sp.roll)  ? v_rates_sp.roll  : rates(0);
 				_rates_sp(1) = PX4_ISFINITE(v_rates_sp.pitch) ? v_rates_sp.pitch : rates(1);
@@ -219,6 +224,10 @@ MulticopterRateControl::Run()
             if(_so3_signal_sub.update(&so3_sp)){
                 _rate_control.updateSo3setpoints(Vector3f(so3_sp.kr_er), Vector3f(so3_sp.rates_sp));
             }
+            _so3_command_sub.copy(&so3_cmd);
+            Quatf qd(so3_cmd.q_d);
+            matrix::Vector3f omega_d(so3_cmd.roll_body_rate, so3_cmd.pitch_body_rate, so3_cmd.yaw_body_rate);
+            _rate_control.updateSo3AttandRateSp(qd, omega_d);
 
 		}
 
@@ -258,8 +267,9 @@ MulticopterRateControl::Run()
 			// run rate controller
 			const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 
-            const Vector3f moments = _rate_control.updateSo3Controller(rates, dt);
-
+//            const Vector3f moments = _rate_control.updateSo3Controller(rates, dt);
+            const matrix::Quaternion<float> q(att.q);
+            const Vector3f moments = _rate_control.updateSo3ControllerAll(rates, q, dt, angular_accel);
 
 			// publish rate controller status
 			rate_ctrl_status_s rate_ctrl_status{};

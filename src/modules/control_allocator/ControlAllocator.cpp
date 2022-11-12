@@ -132,6 +132,9 @@ ControlAllocator::parameters_updated()
 	}
 
 	update_effectiveness_matrix_if_needed(EffectivenessUpdateReason::CONFIGURATION_UPDATE);
+
+    _so3_enabled = _param_use_so3.get();
+    _so3_mtr_enabled = _param_so3_mtr_enabled.get();
 }
 
 void

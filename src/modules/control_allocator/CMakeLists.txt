@@ -34,6 +34,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(ActuatorEffectiveness)
 add_subdirectory(ControlAllocation)
+add_subdirectory(ArplControlAllocator)
 
 px4_add_module(
 	MODULE modules__control_allocator
@@ -51,6 +52,7 @@ px4_add_module(
 		mathlib
 		ActuatorEffectiveness
 		ControlAllocation
+		ArplControlAllocator
 		mixer
 		px4_work_queue
 )

@@ -55,6 +55,7 @@
 #include <ControlAllocation.hpp>
 #include <ControlAllocationPseudoInverse.hpp>
 #include <ControlAllocationSequentialDesaturation.hpp>
+#include <ArplControlAllocator.hpp>
 
 #include <lib/matrix/matrix/math.hpp>
 #include <lib/perf/perf_counter.h>
@@ -133,6 +134,7 @@ private:
 
 	AllocationMethod _allocation_method_id{AllocationMethod::NONE};
 	ControlAllocation *_control_allocation[ActuatorEffectiveness::MAX_NUM_MATRICES] {}; 	///< class for control allocation calculations
+	ArplControlAllocator *_arpl_control_allocator {};
 	int _num_control_allocation{0};
 	hrt_abstime _last_effectiveness_update{0};
 
@@ -188,10 +190,24 @@ private:
 	Params _params{};
 	bool _has_slew_rate{false};
 
+    // Changes for low level so3 controller
+    bool _so3_enabled{false}; // use so3 attitude controller
+    bool _so3_mtr_enabled{false}; // generate motor commands from force moment of so3
+
 	DEFINE_PARAMETERS(
 		(ParamInt<px4::params::CA_AIRFRAME>) _param_ca_airframe,
 		(ParamInt<px4::params::CA_METHOD>) _param_ca_method,
-		(ParamInt<px4::params::CA_R_REV>) _param_r_rev
+		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
+        (ParamBool<px4::params::SO3_ENABLE>) _param_use_so3,
+        (ParamBool<px4::params::SO3_MOTOR_CMD>) _param_so3_mtr_enabled,
+        (ParamFloat<px4::params::SO3_ROTOR0_PX>) _param_r0_px,
+        (ParamFloat<px4::params::SO3_ROTOR1_PX>) _param_r1_px,
+        (ParamFloat<px4::params::SO3_ROTOR2_PX>) _param_r2_px,
+        (ParamFloat<px4::params::SO3_ROTOR3_PX>) _param_r3_px,
+        (ParamFloat<px4::params::SO3_ROTOR0_PY>) _param_r0_py,
+        (ParamFloat<px4::params::SO3_ROTOR1_PY>) _param_r1_py,
+        (ParamFloat<px4::params::SO3_ROTOR2_PY>) _param_r2_py,
+        (ParamFloat<px4::params::SO3_ROTOR3_PY>) _param_r3_py
 	)
 
 };

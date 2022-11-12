@@ -514,4 +514,98 @@ PARAM_DEFINE_FLOAT(SO3_INT_YAW, 0.005f);
  * @boolean
  * @group Multicopter Rate Control
  */
-PARAM_DEFINE_INT32(USE_SO3, 1);
+PARAM_DEFINE_INT32(SO3_ENABLE, 1);
+
+/**
+ * Boolean whether to use direct motor commands with so3 att control
+ *
+ *
+ * @boolean
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_INT32(SO3_MOTOR_CMD, 0);
+
+/**
+ * Perpendicular distance of motor i to the y axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_ROTOR0_PX, 0.07);
+
+/**
+ * Perpendicular distance of motor i to the y axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_ROTOR1_PX, 0.07);
+
+/**
+ * Perpendicular distance of motor i to the y axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+
+PARAM_DEFINE_FLOAT(SO3_ROTOR2_PX, 0.07);
+
+/**
+ * Perpendicular distance of motor i to the y axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+
+PARAM_DEFINE_FLOAT(SO3_ROTOR3_PX, 0.07);
+
+
+/**
+ * Perpendicular distance of motor i to the y axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_ROTOR0_PY, 0.07);
+
+/**
+ * Perpendicular distance of motor i to the x axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+PARAM_DEFINE_FLOAT(SO3_ROTOR1_PY, 0.07);
+
+/**
+ * Perpendicular distance of motor i to the x axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+
+PARAM_DEFINE_FLOAT(SO3_ROTOR2_PY, 0.07);
+
+/**
+ * Perpendicular distance of motor i to the x axis
+ *
+ * @min 0.01
+ * @max 0.15
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+
+PARAM_DEFINE_FLOAT(SO3_ROTOR3_PY, 0.07);

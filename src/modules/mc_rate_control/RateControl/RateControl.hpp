@@ -102,10 +102,19 @@ public:
 
     void setSo3RateGains(float roll, float pitch, float yaw);
 
+    void setSo3AttGains(float roll, float pitch, float yaw);
+
     // Geometric Control Functions
     matrix::Vector3f updateSo3Controller(const matrix::Vector3f &rate, const float dt);
 
+    matrix::Vector3f updateSo3ControllerAll(const matrix::Vector3f &rate,
+                                            const matrix::Quaternion<float> &att, const float dt,
+                                            const matrix::Vector3f &angular_accel);
+
     void updateSo3setpoints(const matrix::Vector3f &att_signal, const matrix::Vector3f &rate_signal);
+
+    void updateSo3AttandRateSp(const matrix::Quaternion<float> &att_sp,
+                               const matrix::Vector3f &rate_sp);
 
     void updateInertia(float ixx, float iyy, float izz);
 
@@ -119,6 +128,7 @@ private:
 	void updateIntegral(matrix::Vector3f &rate_error, const float dt);
 
 	// Gains
+
 	matrix::Vector3f _gain_p; ///< rate control proportional gain for all axes x, y, z
 	matrix::Vector3f _gain_i; ///< rate control integral gain
 	matrix::Vector3f _gain_d; ///< rate control derivative gain
@@ -139,6 +149,7 @@ private:
     matrix::Matrix3f _inertia;
     matrix::Vector3f _so3_desired_rates;
     matrix::Vector3f _so3_i_rate_gain;
-
-
+    matrix::Dcm<float> _so3_R_des;
+    matrix::Vector3f _so3_att_gain;
+    matrix::Vector3f _so3_rate_des;
 };

@@ -168,9 +168,9 @@ PARAM_DEFINE_FLOAT(MC_MAN_TILT_TAU, 0.0f);
  * @min 0.0
  * @max 2.0
  * @decimal 2
- * @group Multicopter Position Control
+ * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(SO3_PITCH_GAIN, 0.25f);
+PARAM_DEFINE_FLOAT(SO3_PITCH_GAIN, 0.1f);
 
 /**
  * Geometric Control Attitude Gain - Roll
@@ -181,9 +181,9 @@ PARAM_DEFINE_FLOAT(SO3_PITCH_GAIN, 0.25f);
  * @min 0.0
  * @max 2.0
  * @decimal 2
- * @group Multicopter Position Control
+ * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(SO3_ROLL_GAIN, 0.25f);
+PARAM_DEFINE_FLOAT(SO3_ROLL_GAIN, 0.1f);
 
 /**
  * Geometric Control Attitude Gain - Yaw
@@ -194,7 +194,7 @@ PARAM_DEFINE_FLOAT(SO3_ROLL_GAIN, 0.25f);
  * @min 0.0
  * @max 2.0
  * @decimal 2
- * @group Multicopter Position Control
+ * @group Multicopter Rate Control
  */
-PARAM_DEFINE_FLOAT(SO3_YAW_GAIN, 0.1f);
+PARAM_DEFINE_FLOAT(SO3_YAW_GAIN, 0.05f);
 
